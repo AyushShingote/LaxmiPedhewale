@@ -1,0 +1,17 @@
+{
+  "name": "लक्ष्मी पेढेवाले (Laxmi Pedhewale)",
+  "short_name": "Laxmi Pedhewale",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF6EF",
+  "theme_color": "#8E1616",
+  "description": "घारगावचा सुप्रसिद्ध कंदी पेढा, खवा व बासुंदी. १९७१ पासूनची परंपरा.",
+  "icons": [
+    {
+      "src": "assets/images/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
+

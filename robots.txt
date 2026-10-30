@@ -1,0 +1,7 @@
+# Laxmi Pedhewale Robots.txt
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://laxmipedhewale.com/sitemap.xml
+

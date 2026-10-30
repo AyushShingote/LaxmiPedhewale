@@ -1,0 +1,16 @@
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# Temporary files
+*.tmp
+*.log
+test_*.png
+measure_ui.py
+verify_site.py
+
+# Editor folders
+.vscode/
+.idea/
