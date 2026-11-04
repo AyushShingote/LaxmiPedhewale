@@ -24,11 +24,6 @@
   const navMenu = document.querySelector('.nav-menu');
   const navLinks = document.querySelectorAll('.nav-link');
   const langBtns = document.querySelectorAll('.lang-btn');
-  const lightbox = document.getElementById('lightboxModal');
-  const lightboxImg = document.getElementById('lightboxImg');
-  const lightboxCaption = document.getElementById('lightboxCaption');
-  const lightboxClose = document.getElementById('lightboxClose');
-  const galleryItems = document.querySelectorAll('.gallery-item');
   const waButtons = document.querySelectorAll('.btn-wa-dynamic');
 
   /**
@@ -195,43 +190,297 @@
   }, { passive: true });
 
   /**
-   * Lightbox Modal for Photo Gallery
+   * Photo Gallery Dynamic Carousel & Enhanced Lightbox
    */
-  if (lightbox && lightboxImg && galleryItems.length > 0) {
-    galleryItems.forEach(item => {
-      item.addEventListener('click', () => {
-        const fullImgSrc = item.getAttribute('data-full-img') || item.querySelector('img').getAttribute('src');
-        const caption = item.getAttribute('data-caption') || item.querySelector('.gallery-caption')?.innerText || '';
-        
+  const galleryTrack = document.getElementById('galleryTrack');
+  const galleryViewport = document.getElementById('galleryTrackViewport');
+  const galleryPrevBtn = document.getElementById('galleryPrevBtn');
+  const galleryNextBtn = document.getElementById('galleryNextBtn');
+  const galleryDotsContainer = document.getElementById('galleryDots');
+  const gallerySlides = Array.from(document.querySelectorAll('.gallery-slide'));
+
+  const lightbox = document.getElementById('lightboxModal');
+  const lightboxImg = document.getElementById('lightboxImg');
+  const lightboxCaption = document.getElementById('lightboxCaption');
+  const lightboxClose = document.getElementById('lightboxClose');
+  const lightboxPrev = document.getElementById('lightboxPrev');
+  const lightboxNext = document.getElementById('lightboxNext');
+  const lightboxCounter = document.getElementById('lightboxCounter');
+
+  if (galleryTrack && gallerySlides.length > 0) {
+    let currentSlide = 0;
+    let autoplayTimer = null;
+    let touchStartX = 0;
+    let touchEndX = 0;
+    let isSwiping = false;
+
+    function getSlidesPerView() {
+      const w = window.innerWidth;
+      if (w <= 640) return 1;
+      if (w <= 991) return 2;
+      return 3;
+    }
+
+    function getMaxIndex() {
+      return Math.max(0, gallerySlides.length - getSlidesPerView());
+    }
+
+    function createDots() {
+      if (!galleryDotsContainer) return;
+      galleryDotsContainer.innerHTML = '';
+      const maxIndex = getMaxIndex();
+      const dotCount = maxIndex + 1;
+
+      for (let i = 0; i < dotCount; i++) {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.className = 'carousel-dot' + (i === currentSlide ? ' active' : '');
+        dot.setAttribute('aria-label', `स्लाइड ${i + 1} वर जा / Go to slide ${i + 1}`);
+        dot.addEventListener('click', () => {
+          goToSlide(i);
+          resetAutoplay();
+        });
+        galleryDotsContainer.appendChild(dot);
+      }
+    }
+
+    function updateDots() {
+      if (!galleryDotsContainer) return;
+      const dots = galleryDotsContainer.querySelectorAll('.carousel-dot');
+      dots.forEach((dot, idx) => {
+        if (idx === currentSlide) {
+          dot.classList.add('active');
+        } else {
+          dot.classList.remove('active');
+        }
+      });
+    }
+
+    function updateSlidePosition() {
+      const maxIndex = getMaxIndex();
+      if (currentSlide > maxIndex) {
+        currentSlide = maxIndex;
+      }
+      if (currentSlide < 0) {
+        currentSlide = 0;
+      }
+
+      if (gallerySlides[0]) {
+        const slideWidth = gallerySlides[0].getBoundingClientRect().width;
+        const gap = 20; // 20px CSS gap
+        const offset = currentSlide * (slideWidth + gap);
+        galleryTrack.style.transform = `translateX(-${offset}px)`;
+      }
+
+      updateDots();
+    }
+
+    function nextSlide() {
+      const maxIndex = getMaxIndex();
+      if (currentSlide >= maxIndex) {
+        currentSlide = 0; // Seamless wraparound
+      } else {
+        currentSlide++;
+      }
+      updateSlidePosition();
+    }
+
+    function prevSlide() {
+      const maxIndex = getMaxIndex();
+      if (currentSlide <= 0) {
+        currentSlide = maxIndex; // Seamless wraparound
+      } else {
+        currentSlide--;
+      }
+      updateSlidePosition();
+    }
+
+    function goToSlide(index) {
+      currentSlide = Math.max(0, Math.min(index, getMaxIndex()));
+      updateSlidePosition();
+    }
+
+    function startAutoplay() {
+      stopAutoplay();
+      autoplayTimer = setInterval(nextSlide, 4500);
+    }
+
+    function stopAutoplay() {
+      if (autoplayTimer) {
+        clearInterval(autoplayTimer);
+        autoplayTimer = null;
+      }
+    }
+
+    function resetAutoplay() {
+      stopAutoplay();
+      startAutoplay();
+    }
+
+    // Navigation Buttons
+    if (galleryPrevBtn) {
+      galleryPrevBtn.addEventListener('click', () => {
+        prevSlide();
+        resetAutoplay();
+      });
+    }
+
+    if (galleryNextBtn) {
+      galleryNextBtn.addEventListener('click', () => {
+        nextSlide();
+        resetAutoplay();
+      });
+    }
+
+    // Pause autoplay on mouse hover, touch and focus
+    const carouselWrapper = document.querySelector('.gallery-carousel-wrapper');
+    if (carouselWrapper) {
+      carouselWrapper.addEventListener('mouseenter', stopAutoplay);
+      carouselWrapper.addEventListener('mouseleave', startAutoplay);
+      carouselWrapper.addEventListener('focusin', stopAutoplay);
+      carouselWrapper.addEventListener('focusout', startAutoplay);
+    }
+
+    // Touch & Swipe gestures
+    if (galleryViewport) {
+      galleryViewport.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+        isSwiping = true;
+        stopAutoplay();
+      }, { passive: true });
+
+      galleryViewport.addEventListener('touchend', (e) => {
+        if (!isSwiping) return;
+        touchEndX = e.changedTouches[0].screenX;
+        isSwiping = false;
+        const diffX = touchStartX - touchEndX;
+
+        if (Math.abs(diffX) > 40) {
+          if (diffX > 0) {
+            nextSlide();
+          } else {
+            prevSlide();
+          }
+        }
+        startAutoplay();
+      }, { passive: true });
+    }
+
+    // Resize recalculation
+    window.addEventListener('resize', () => {
+      createDots();
+      updateSlidePosition();
+    }, { passive: true });
+
+    // Initialize carousel
+    createDots();
+    updateSlidePosition();
+    startAutoplay();
+
+    // =========================================================================
+    // Enhanced Lightbox with Next / Previous & Keyboard Navigation
+    // =========================================================================
+    let activeLightboxIndex = 0;
+
+    function getMarathiNumber(num) {
+      const marathiDigits = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+      return String(num).split('').map(d => marathiDigits[d] || d).join('');
+    }
+
+    function showLightboxImage(index) {
+      if (index < 0) index = gallerySlides.length - 1;
+      if (index >= gallerySlides.length) index = 0;
+      activeLightboxIndex = index;
+
+      const slide = gallerySlides[activeLightboxIndex];
+      if (!slide || !lightboxImg) return;
+
+      const fullImgSrc = slide.getAttribute('data-full-img') || slide.querySelector('img')?.getAttribute('src') || '';
+      const caption = slide.getAttribute('data-caption') || slide.querySelector('.gallery-caption')?.innerText || '';
+
+      lightboxImg.style.opacity = '0';
+      lightboxImg.style.transform = 'scale(0.96)';
+
+      setTimeout(() => {
         lightboxImg.setAttribute('src', fullImgSrc);
         lightboxImg.setAttribute('alt', caption);
         if (lightboxCaption) {
           lightboxCaption.innerText = caption;
         }
-        lightbox.classList.add('active');
-        document.body.style.overflow = 'hidden';
-      });
-    });
+
+        if (lightboxCounter) {
+          const isMr = currentLang === 'mr';
+          const currentDisp = isMr ? getMarathiNumber(activeLightboxIndex + 1) : (activeLightboxIndex + 1);
+          const totalDisp = isMr ? getMarathiNumber(gallerySlides.length) : gallerySlides.length;
+          lightboxCounter.innerText = `${currentDisp} / ${totalDisp}`;
+        }
+
+        lightboxImg.style.opacity = '1';
+        lightboxImg.style.transform = 'scale(1)';
+      }, 100);
+    }
+
+    function openLightbox(index) {
+      if (!lightbox) return;
+      stopAutoplay();
+      showLightboxImage(index);
+      lightbox.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
 
     function closeLightbox() {
+      if (!lightbox) return;
       lightbox.classList.remove('active');
       document.body.style.overflow = '';
-      lightboxImg.setAttribute('src', '');
+      if (lightboxImg) {
+        lightboxImg.setAttribute('src', '');
+      }
+      startAutoplay();
     }
+
+    // Bind click on each gallery slide
+    gallerySlides.forEach((slide, index) => {
+      slide.addEventListener('click', () => {
+        openLightbox(index);
+      });
+    });
 
     if (lightboxClose) {
       lightboxClose.addEventListener('click', closeLightbox);
     }
 
-    lightbox.addEventListener('click', (e) => {
-      if (e.target === lightbox) {
-        closeLightbox();
-      }
-    });
+    if (lightboxPrev) {
+      lightboxPrev.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showLightboxImage(activeLightboxIndex - 1);
+      });
+    }
 
+    if (lightboxNext) {
+      lightboxNext.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showLightboxImage(activeLightboxIndex + 1);
+      });
+    }
+
+    if (lightbox) {
+      lightbox.addEventListener('click', (e) => {
+        if (e.target === lightbox || e.target.classList.contains('lightbox-content-box') || e.target.classList.contains('lightbox-img-wrapper')) {
+          closeLightbox();
+        }
+      });
+    }
+
+    // Keyboard navigation: Escape, ArrowLeft, ArrowRight
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+      if (!lightbox || !lightbox.classList.contains('active')) return;
+
+      if (e.key === 'Escape') {
         closeLightbox();
+      } else if (e.key === 'ArrowLeft') {
+        showLightboxImage(activeLightboxIndex - 1);
+      } else if (e.key === 'ArrowRight') {
+        showLightboxImage(activeLightboxIndex + 1);
       }
     });
   }
