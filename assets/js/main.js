@@ -23,7 +23,7 @@
   const mobileToggle = document.querySelector('.mobile-toggle');
   const navMenu = document.querySelector('.nav-menu');
   const navLinks = document.querySelectorAll('.nav-link');
-  const langBtns = document.querySelectorAll('.lang-btn');
+  const langBtns = document.querySelectorAll('[data-lang-btn]');
   const waButtons = document.querySelectorAll('.btn-wa-dynamic');
 
   /**
@@ -31,18 +31,13 @@
    */
   function initLanguage() {
     // Check if the current page is English path (/en/)
-    const isEnPath = window.location.pathname.includes('/en/') || window.location.pathname.endsWith('/en');
+    const isEnPath = window.location.pathname.includes('/en/') || 
+                     window.location.pathname.endsWith('/en') || 
+                     window.location.pathname.endsWith('/en/index.html');
     
-    // Check localStorage, default to 'mr'
-    const storedLang = localStorage.getItem('laxmi_pedhewale_lang');
-    
-    if (isEnPath) {
-      currentLang = 'en';
-    } else if (storedLang === 'en') {
-      currentLang = 'en';
-    } else {
-      currentLang = 'mr';
-    }
+    // Explicit URL path defines language context
+    currentLang = isEnPath ? 'en' : 'mr';
+    localStorage.setItem('laxmi_pedhewale_lang', currentLang);
 
     applyLanguage(currentLang);
   }
@@ -54,14 +49,20 @@
     currentLang = lang;
     localStorage.setItem('laxmi_pedhewale_lang', lang);
     document.documentElement.lang = lang;
+    if (document.body) {
+      document.body.setAttribute('lang', lang);
+      document.body.setAttribute('data-lang', lang);
+    }
 
     // Update Language Buttons
     langBtns.forEach(btn => {
       const btnLang = btn.getAttribute('data-lang-btn');
       if (btnLang === lang) {
         btn.classList.add('active');
+        btn.setAttribute('aria-pressed', 'true');
       } else {
         btn.classList.remove('active');
+        btn.setAttribute('aria-pressed', 'false');
       }
     });
 
@@ -110,19 +111,34 @@
    */
   langBtns.forEach(btn => {
     btn.addEventListener('click', (e) => {
+      e.preventDefault();
       const targetLang = btn.getAttribute('data-lang-btn');
       if (targetLang === currentLang) return;
 
       // Smooth switch in-page
       applyLanguage(targetLang);
 
-      // Check if we should synchronize URL without reload or navigate
-      const isEnPath = window.location.pathname.includes('/en/');
-      if (targetLang === 'en' && !isEnPath && window.location.pathname.endsWith('index.html')) {
-        // If user is on root index.html and explicitly switches to en, we update or can navigate to en/index.html
-        window.location.href = 'en/index.html';
+      // Perform navigation to dedicated URL
+      const isEnPath = window.location.pathname.includes('/en/') || 
+                       window.location.pathname.endsWith('/en') || 
+                       window.location.pathname.endsWith('/en/index.html');
+
+      if (targetLang === 'en' && !isEnPath) {
+        if (window.location.protocol === 'file:') {
+          window.location.href = 'en/index.html';
+        } else if (window.location.pathname.endsWith('index.html')) {
+          window.location.href = 'en/index.html';
+        } else {
+          window.location.href = '/en/';
+        }
       } else if (targetLang === 'mr' && isEnPath) {
-        window.location.href = '../index.html';
+        if (window.location.protocol === 'file:') {
+          window.location.href = '../index.html';
+        } else if (window.location.pathname.endsWith('index.html')) {
+          window.location.href = '../index.html';
+        } else {
+          window.location.href = '/';
+        }
       }
     });
   });
@@ -302,6 +318,9 @@
 
     function startAutoplay() {
       stopAutoplay();
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return;
+      }
       autoplayTimer = setInterval(nextSlide, 4500);
     }
 
@@ -433,7 +452,8 @@
       lightbox.classList.remove('active');
       document.body.style.overflow = '';
       if (lightboxImg) {
-        lightboxImg.setAttribute('src', '');
+        lightboxImg.setAttribute('src', 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 1 1\'%3E%3C/svg%3E');
+        lightboxImg.setAttribute('alt', '');
       }
       startAutoplay();
     }
@@ -485,10 +505,12 @@
     });
   }
 
-  // Run on DOM Ready
-  document.addEventListener('DOMContentLoaded', () => {
+  // Run on DOM Ready or immediately if document is already ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLanguage);
+  } else {
     initLanguage();
-  });
+  }
 
 })();
 

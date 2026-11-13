@@ -3,5 +3,4 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://laxmipedhewale.com/sitemap.xml
-
+Sitemap: https://www.laxmipedhewale.com/sitemap.xml

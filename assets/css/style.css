@@ -4,8 +4,6 @@
    Crafted with Traditional Maharashtrian Heritage & Modern Responsive UX
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Mukta:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Rozha+One&family=Yatra+One&display=swap');
-
 :root {
   /* Brand Heritage Color Palette */
   --color-saffron: #C8500C;
@@ -116,6 +114,49 @@ button {
 
 ul, ol {
   list-style: none;
+}
+
+/* Accessibility: Skip to Content */
+.skip-to-content {
+  position: absolute;
+  top: -120px;
+  left: 1.5rem;
+  background: var(--color-maroon);
+  color: #FFFFFF !important;
+  padding: 0.65rem 1.25rem;
+  border-radius: 4px;
+  font-weight: 700;
+  z-index: 99999;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  transition: top var(--transition-fast);
+}
+
+.skip-to-content:focus {
+  top: 1.5rem;
+}
+
+/* Accessibility: Visible Focus States for Keyboard Navigation */
+:focus-visible {
+  outline: 2px solid var(--color-maroon);
+  outline-offset: 3px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--color-saffron);
+  outline-offset: 3px;
+}
+
+/* Accessibility: User Motion Preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ==========================================================================
@@ -975,6 +1016,7 @@ ul, ol {
   margin-bottom: 8px;
 }
 
+.timeline-card h3,
 .timeline-card h4 {
   font-size: 1.22rem;
   color: var(--color-maroon-dark);
